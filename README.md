@@ -4,7 +4,7 @@
 
 Run with `runghc ulc.hs`
 
-Or with `ghci ulc.hs`, `ulc ""` with a term in quotes.
+Or with `ghci ulc.hs`, `ulc ""` with a term in quotes. Also type `pt` within GHCI to list predefined terms.
 
 #### Grammar:
 
@@ -22,7 +22,7 @@ var ::= <any string not including (, ), /, ., or space, and not a predefined ter
 
 ```
 $ runghc ulc.hs
-Predefined terms: id, tru, fls, test, and, pair, fst, snd, c0, c1, c2, c3, c4, c5, scc, plus, times, iszro, zz, ss, prd, fix
+Predefined terms: id, tru, fls, test, and, pair, fst, snd, cn (where n is a number), scc, plus, times, iszro, zz, ss, prd, omega, fix
 Enter untyped lambda calculous term: (/n./s./z.s (n s z))(/s./z.s (s z)) succ zero
                           ╭──────App──╮  
                           │           │  
@@ -126,9 +126,12 @@ s             ╭──App╮
 done
 ```
 
-```$ runghc ulc.hs
-Predefined terms: id, tru, fls, test, and, pair, fst, snd, c0, c1, c2, c3, c4, c5, scc, plus, times, iszro, zz, ss, prd, fix
-Enter untyped calculous term: fst (pair firstThing secondThing)
+```
+$ ghci ulc.hs
+...
+*ULC> pt
+Predefined terms: id, tru, fls, test, and, pair, fst, snd, cn (where n is a number), scc, plus, times, iszro, zz, ss, prd, omega, fix
+*ULC> ulc "fst (pair firstThing secondThing)"
   ╭────App────────────────────────╮            
   │                               │            
  λ p                ╭────────────App─────╮     

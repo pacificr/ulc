@@ -1,6 +1,7 @@
 module ULC where
 
 import Data.List
+import Text.Read
 
 data T = Var String
        | Abs String T
@@ -108,9 +109,14 @@ tokenize ('(':ss) = "(":(tokenize ss)
 tokenize ('/':ss) = "/":(tokenize ss)
 tokenize ('.':ss) = ".":(tokenize ss)
 tokenize (')':ss) = ")":(tokenize ss)
-tokenize (' ':ss) = tokenize ss
+tokenize (s:ss) | s == ' ' || s == '\n' || s == '\t' = tokenize ss
 tokenize s = let (f,s') = tokenizeVar s
              in f:(tokenize s')
+
+churchNumeral :: Int -> String
+churchNumeral 1 = "s z"
+churchNumeral n | n < 1 = "z"
+churchNumeral n = "s (" ++ (churchNumeral (n-1)) ++ ")"
 
 parse1 :: [String] -> (Syntax, [String])
 parse1 [] = (End, [])
@@ -128,12 +134,7 @@ parse1 ("and":ts) = parse1 ((tokenize "(/b./c.b c fls)")++ts)
 parse1 ("pair":ts) = parse1 ((tokenize "(/f./s./b.b f s)")++ts)
 parse1 ("fst":ts) = parse1 ((tokenize "(/p.p tru)")++ts)
 parse1 ("snd":ts) = parse1 ((tokenize "(/p.p fls)")++ts)
-parse1 ("c0":ts) = parse1 ((tokenize "(/s./z.z)")++ts)
-parse1 ("c1":ts) = parse1 ((tokenize "(/s./z.s z)")++ts)
-parse1 ("c2":ts) = parse1 ((tokenize "(/s./z.s (s z))")++ts)
-parse1 ("c3":ts) = parse1 ((tokenize "(/s./z.s (s (s z)))")++ts)
-parse1 ("c4":ts) = parse1 ((tokenize "(/s./z.s (s (s (s z))))")++ts)
-parse1 ("c5":ts) = parse1 ((tokenize "(/s./z.s (s (s (s (s z)))))")++ts)
+parse1 (('c':n):ts) | ((readMaybe n) :: Maybe Int) /= Nothing = parse1 ((tokenize $ "(/s./z." ++ (churchNumeral (read n)) ++ ")")++ts)
 parse1 ("scc":ts) = parse1 ((tokenize "(/n./s./z.s (n s z))")++ts)
 parse1 ("plus":ts) = parse1 ((tokenize "(/m./n./s./z.m s (n s z))")++ts)
 parse1 ("times":ts) = parse1 ((tokenize "(/m./n.m (plus n) c0)")++ts)
@@ -141,6 +142,7 @@ parse1 ("iszro":ts) = parse1 ((tokenize "(/m.m (/x.fls) tru)")++ts)
 parse1 ("zz":ts) = parse1 ((tokenize "(pair c0 c0)")++ts)
 parse1 ("ss":ts) = parse1 ((tokenize "(/p.pair (snd p) (plus c1 (snd p)))")++ts)
 parse1 ("prd":ts) = parse1 ((tokenize "(/m.fst (m ss zz))")++ts)
+parse1 ("omega":ts) = parse1 ((tokenize "((/x.x x)(/x.x x))")++ts)
 parse1 ("fix":ts) = parse1 ((tokenize "(/f.(/x.f (/y.x x y))(/x.f (/y.x x y)))")++ts)
 parse1 (n:ts) = let (s, ts') = parse1 ts
                 in (Name n s, ts')
@@ -158,12 +160,15 @@ parse2 (Name n s) = parse2App (Var n) s
 
 -- Running
 
+pt :: IO ()
+pt = putStrLn "Predefined terms: id, tru, fls, test, and, pair, fst, snd, cn (where n is a number), scc, plus, times, iszro, zz, ss, prd, omega, fix"
+
 ulc :: String -> IO ()
 ulc = evalPrint . fst . parse2 . fst . parse1 . tokenize
 
 main :: IO ()
 main = do
-  putStrLn "Predefined terms: id, tru, fls, test, and, pair, fst, snd, c0, c1, c2, c3, c4, c5, scc, plus, times, iszro, zz, ss, prd, fix"
+  pt
   putStr "Enter untyped lambda calculous term: "
   t <- getLine
   ulc t
